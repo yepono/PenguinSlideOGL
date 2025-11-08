@@ -36,6 +36,9 @@ add_executable(FullDemoTemplateOGL
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/CollitionBox.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Texto.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Scenario.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/NoiseGenerator.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/TerrainChunk.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Terreno.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/DemoTemplateOGL.cpp
 )
 

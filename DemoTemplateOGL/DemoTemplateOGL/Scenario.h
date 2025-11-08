@@ -27,7 +27,7 @@ private:
 	std::vector<Billboard2D*> billBoard2D;
 	std::vector<Model*> ourModel;
 	Model* camara;
-	Water* water;
+	//Water* water; desactivado por cambio en terreno.h
 	float angulo;
 	float animacion = 0;
 	std::vector<Texto*> ourText;

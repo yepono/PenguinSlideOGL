@@ -111,20 +111,42 @@ int main(int argc, char** argv){
 int startGameEngine(void *ptrMsg){
     // Main character with it's camera
     glm::vec3 translate, scale, v(0, 0, -1);
-    translate = glm::vec3(5.0f, 10.0f, -5.0f);
+    translate = glm::vec3(30.0f, 10.0f, 60.0f);
     //5, ye - 1,-5
     //MainModel *model = new MainModel(hWnd, "models/Cube.obj", translate);
     Camera* camera = Camera::getInstance();
-    Model* model = new Model("models/BaseSpiderman/BaseSpiderman.obj", translate, camera);
+    Model* model = new Model("models/penguin/Idle_jumping.fbx", translate, camera);
     model->setTranslate(&translate);
     camera->setFront(v);
     camera->setCharacterHeight(4.0);
-    scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+    scale = glm::vec3(0.09f, 0.09f, 0.09f);	// it's a bit too big for our scene, so scale it down
     model->setScale(&scale);
     model->setTranslate(&translate);
+    model->setRotX(0);
+	model->setNextRotX(0);
+    delete model->getModelAttributes()->at(0).hitbox;
+    Node n;
+    n.m_center.x = 0.4;
+    n.m_center.y = 2.6;
+    n.m_center.z = 0;
+    n.m_halfWidth = 1;
+    n.m_halfHeight = 2.4;
+    n.m_halfDepth = 1;
+    model->getModelAttributes()->at(0).hitbox = CollitionBox::GenerateAABB(translate, n, camera);
+	try{
+		std::vector<Animation> animations = Animation::loadAllAnimations("models/penguin/Idle_jumping.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::vector<Animation> animation = Animation::loadAllAnimations("models/penguin/jump.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::vector<Animation> animation = Animation::loadAllAnimations("models/penguin/jump.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::move(animation.begin(), animation.end(), std::back_inserter(animations));
+		for (Animation animation : animations)
+			model->setAnimator(Animator(animation));
+		model->setAnimation(0);
+	}catch(...){
+		ERRORL("Could not load animation!", "ANIMACION");
+	}
 
     OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
-    translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(5.0, -5.0), -5.0f);
+    translate = glm::vec3(5.0f, OGLobj->getTerreno()->GetWorldHeight(5.0, -5.0), -5.0f);
     model->setTranslate(&translate);
     model->setNextTranslate(&translate);
     renderiza = false;
@@ -203,7 +225,7 @@ bool checkInput(GameActions *actions, Scene* scene) {
         pos.x += actions->hAdvance * (3 * gameTime.deltaTime/100) * glm::cos(glm::radians(OGLobj->getRotY()));
         pos.z += actions->hAdvance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-//        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
+         pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->GetWorldHeight(pos.x, pos.z);
 
         OGLobj->setNextTranslate(&pos);
     }
@@ -212,7 +234,7 @@ bool checkInput(GameActions *actions, Scene* scene) {
         pos.x += actions->advance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
         pos.z += actions->advance * (3 * gameTime.deltaTime / 100) * glm::cos(glm::radians(OGLobj->getRotY()));
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-//        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
+        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->GetWorldHeight(pos.x, pos.z);
         OGLobj->setNextTranslate(&pos);
     }
     if (*actions->jump > 0){
@@ -224,6 +246,9 @@ bool checkInput(GameActions *actions, Scene* scene) {
             *actions->jump = 0.0f;
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
         OGLobj->setNextTranslate(&pos);
+		OGLobj->setAnimation(1);
+    }else{
+        OGLobj->setAnimation(0);
     }
     if (actions->getAngle() != NULL) {
         OGLobj->cameraDetails->calculateAngleAroundPlayer((*actions->getAngle()) * (6 * gameTime.deltaTime / 100));

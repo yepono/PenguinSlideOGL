@@ -6,7 +6,7 @@
 #include "BillboardAnimation.h"
 #include "Billboard2D.h"
 #include "Texto.h"
-#include "Water.h"
+//#include "Water.h" desactivado por cambio en terreno.h
 #include "Animator.h"
 #include "Animation.h"
 
@@ -42,7 +42,7 @@ class Scene {
 					glm::vec3 &posM = objInMovement ? *model->getNextTranslate(j) : *model->getTranslate(j);
 					glm::vec3 ejeColision = glm::vec3(0);
 					bool isPrincipal = model == camara; // Si es personaje principal, activa gravedad
-					float terrainY = getTerreno()->Superficie(posM.x, posM.z);
+					float terrainY = getTerreno()->GetWorldHeight(posM.x, posM.z);
 					ModelCollider mcollider = model->update(terrainY, *getLoadedModels(), ejeColision, isPrincipal, j);
 					if (mcollider.model != NULL){
 						collider = (Model*)mcollider.model;

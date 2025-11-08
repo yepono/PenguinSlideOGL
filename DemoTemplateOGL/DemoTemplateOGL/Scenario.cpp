@@ -25,29 +25,290 @@ void Scenario::InitGraph(Model *main) {
 	angulo = 0;
 	camara = main;
 	//creamos el objeto skydome
-	sky = new SkyDome(32, 32, 20, (WCHAR*)L"skydome/earth.jpg", main->cameraDetails);
+	sky = new SkyDome(32, 32, 20, (WCHAR*)L"skydome/skydome1.jpg", main->cameraDetails);
 	//creamos el terreno
-	terreno = new Terreno((WCHAR*)L"skydome/terreno.jpg", (WCHAR*)L"skydome/texterr2.jpg", 400, 400, main->cameraDetails);
-	water = new Water((WCHAR*)L"textures/terreno.bmp", (WCHAR*)L"textures/water.bmp", 20, 20, camara->cameraDetails);
+	//terreno = new Terreno((WCHAR*)L"skydome/terreno.jpg", (WCHAR*)L"skydome/textnieve.jpg", 400, 400, main->cameraDetails);
+	//water = new Water((WCHAR*)L"textures/terreno.bmp", (WCHAR*)L"textures/water.bmp", 20, 20, camara->cameraDetails);
+	// 1. Create the shared noise generator
+	NoiseGenerator* noiseGen = new NoiseGenerator(1337); // Use any seed
+
+	// 2. Create the terrain manager
+	terreno = new Terreno(main->cameraDetails, noiseGen, "shaders/terrain.vs", "shaders/terrain.fs",sky->directory);
+
+	// 3. Load textures into the manager
+	terreno->LoadTerrainTexture("skydome/nieve.jpg", "texture_diffuse1");
+//	terreno->LoadTerrainTexture("skydome/texterr.jpg", "texture_diffuse2");
+	
+	
+	
 	glm::vec3 translate;
 	glm::vec3 scale;
 	glm::vec3 rotation;
-	translate = glm::vec3(0.0f, 20.0f, 30.0f);
-	water->setTranslate(&translate);
+	//translate = glm::vec3(0.0f, 20.0f, 30.0f);
+	//water->setTranslate(&translate);
 	// load models
 	// -----------
 	ourModel.emplace_back(main);
 	Model* model;
-	model = new Model("models/fogata/fogata.obj", main->cameraDetails);
+	model = new Model("models/fogata/campfire/Campfire.fbx", main->cameraDetails);
 	translate = glm::vec3(0.0f, 10.0f, 25.0f);
+	scale = glm::vec3(0.10f,0.10f, 0.10f);	
 	model->setTranslate(&translate);
 	model->setNextTranslate(&translate);
-	rotation = glm::vec3(1.0f, 0.0f, 0.0f); //rotation X
-	model->setNextRotX(45); // 45� rotation
+	model->setScale(&scale);
+	//rotation = glm::vec3(1.0f, 0.0f, 0.0f); //rotation X
+	//model->setNextRotX(45); // 45� rotation
 	ourModel.emplace_back(model);
 
 	ModelAttributes m;
-	Model *pez = new Model("models/pez/pez.obj", main->cameraDetails);
+
+	// seal
+	model = new Model("models/seal/sealion.obj", main->cameraDetails, false, true);
+	translate = glm::vec3(25.0f, terreno->GetWorldHeight(25.0f, 30.0f) + 2, 60.0f);
+	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Seal";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(270);
+	model->setNextRotX(270);
+	ourModel.emplace_back(model);
+
+	// tire
+	model = new Model("models/tire/Tire.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(15.0f, terreno->GetWorldHeight(15.0f, 30.0f) + 6 , 60.0f);
+	scale = glm::vec3(0.20f, 0.20f, 0.20f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Tire";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(270);
+	model->setNextRotX(270);
+	ourModel.emplace_back(model);
+
+	// seagull
+	model = new Model("models/seagull/seagull/seagull.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(36.0f, terreno->GetWorldHeight(36.0f, 30.0f) + 7 , 60.0f);
+	scale = glm::vec3(0.002f, 0.002f, 0.002f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Seagull";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	ourModel.emplace_back(model);
+	try{
+		std::vector<Animation> animations = Animation::loadAllAnimations("models/seagull/seagull/seagull.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		for (Animation animation : animations)
+			model->setAnimator(Animator(animation));
+		model->setAnimation(0);
+	}catch(...){
+		ERRORL("Could not load animation!", "ANIMACION");
+	}
+
+	// Golden Fish
+	model = new Model("models/goldenFish/Golden_Fish_FBX.FBX", main->cameraDetails, true, true);
+	translate = glm::vec3(33.0f, terreno->GetWorldHeight(33.0f, 30.0f) , 60.0f);
+	scale = glm::vec3(0.07f, 0.07f, 0.07);	// it's a bit too big for our scene, so scale it down
+	model->name = "Golden Fish";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	ourModel.emplace_back(model);
+
+	// Squid
+	model = new Model("models/squid/squid.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(12.0f, terreno->GetWorldHeight(12.0f, 30.0f) + 3, 60.0f);
+	scale = glm::vec3(0.50f, 0.20f, 0.50f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Squid";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	//model->setRotX(-90);
+	//model->setNextRotX(-90);
+	ourModel.emplace_back(model);
+
+	// Christmas Tree
+	model = new Model("models/ctree/ChristmasTree.obj", main->cameraDetails, true, true);
+	translate = glm::vec3(56.0f, terreno->GetWorldHeight(56.0f, 30.0f) +1 , 60.0f);
+	scale = glm::vec3(0.0020f, 0.0020f, 0.0020f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Tree";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(-90);
+	model->setNextRotX(-90);
+	ourModel.emplace_back(model);
+
+	// Blue Whale
+	//model = new Model("models/blueWhale/uploads_files_5014572_Whale_Quad(1)", main->cameraDetails, true, true);
+//	model = new Model("models/blueWhale/BlueWhale.fbx", main->cameraDetails, true, true);
+/*	translate = glm::vec3(60.0f, terreno->Superficie(60.0f, 30.0f) + 2, 60.0f);
+	scale = glm::vec3(0.20f, 0.20f, 0.20f);	// it's a bit too big for our scene, so scale it down
+	model->name = "KillerWhale";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(-90);
+	model->setNextRotX(-90);
+	ourModel.emplace_back(model);*/
+
+
+	// Cave
+/*	model = new Model("models/cave/source/Cave.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(82.0f, terreno->Superficie(82.0f, 30.0f) + 2, 60.0f);
+	scale = glm::vec3(2.0f, 2.0f, 2.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Cave";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	ourModel.emplace_back(model);*/
+
+	// Ice cube
+	model = new Model("models/ice_cube/Ice.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(86.0f, terreno->GetWorldHeight(86.0f, 30.0f) + 1, 60.0f);
+	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "IceCube";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(-90);
+	model->setNextRotX(-90);
+	ourModel.emplace_back(model);
+
+	// Stop
+/*	model = new Model("models/stop/model.dae", main->cameraDetails, true, true);
+	translate = glm::vec3(44.0f, terreno->Superficie(44.0f, 30.0f), 60.0f);
+	scale = glm::vec3(6.0f, 6.0f, 6.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Stop";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(-90);
+	model->setNextRotX(-90);
+	ourModel.emplace_back(model);*/
+
+	// monster
+/*	model = new Model("models/monster/icewithwalking.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(50.0f, terreno->Superficie(50.0f, 30.0f) + 2, 60.0f);
+	scale = glm::vec3(4.0f, 4.0f, 4.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Monster";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(-90);
+	model->setNextRotX(-90);
+	ourModel.emplace_back(model);
+	try{
+		std::vector<Animation> animations = Animation::loadAllAnimations("models/monster/icewithwalking.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		for (Animation animation : animations)
+			model->setAnimator(Animator(animation));
+		model->setAnimation(0);
+	}catch(...){
+		ERRORL("Could not load animation!", "ANIMACION");
+	}*/
+
+	// monster
+	/*model = new Model("models/snowman/snowman.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(90.0f, terreno->Superficie(90.0f, 30.0f) + 2, 60.0f);
+	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Snowman";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(-90);
+	model->setNextRotX(-90);
+	ourModel.emplace_back(model);*/
+
+
+	// monster
+	model = new Model("models/ship/source/alligatorclass.glb", main->cameraDetails, true, true);
+	translate = glm::vec3(45.0f, terreno->GetWorldHeight(45.0f, 30.0f) + 2, 20.0f);
+	scale = glm::vec3(30.0f, 30.0f, 30.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Barco";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(90);
+	model->setNextRotX(90);
+	ourModel.emplace_back(model);
+
+
+	// monster
+/*	model = new Model("models/rock/roca.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(-5.0f, terreno->Superficie(-5.0f, 30.0f) + 2, 60.0f);
+	scale = glm::vec3(0.10f, 0.10f, 0.10f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Roca";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	ourModel.emplace_back(model);*/
+
+
+/*	model = new Model("models/carro/carrito.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(20.0f, terreno->Superficie(20.0f, 30.0f) + 2, 60.0f);
+	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Carro";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	ourModel.emplace_back(model);*/
+
+	// galleta
+/*	model = new Model("models/obstaculo/obstacle_hill.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(10.0f, terreno->Superficie(20.0f, 30.0f) + 2, 50.0f);
+	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Cookie";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	ourModel.emplace_back(model);*/
+
+	// monster
+/*	model = new Model("models/polarBear/source/PB_IDLE_WALK_POUND.fbx", main->cameraDetails, true, true);
+	translate = glm::vec3(70.0f, terreno->Superficie(90.0f, 30.0f) + 2, 50.0f);
+	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Polar Bear";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(-90);
+	model->setNextRotX(-90);
+	ourModel.emplace_back(model);*/
+
+
+	// monster
+	model = new Model("models/ala/Wing.stl", main->cameraDetails, true, true);
+	translate = glm::vec3(60.0f, terreno->GetWorldHeight(90.0f, 30.0f) + 2, 30.0f);
+	scale = glm::vec3(0.10f, 0.10f, 0.10f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Ala";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotX(-90);
+	model->setNextRotX(-90);
+	ourModel.emplace_back(model);
+
+
+	model = new Model("models/penguin/Jogging.fbx", main->cameraDetails);
+	translate = glm::vec3(0.0f, terreno->GetWorldHeight(0.0f, 60.0f), 60.0f);
+	scale = glm::vec3(0.002f, 0.002f, 0.002f);	// it's a bit too big for our scene, so scale it down
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setNextRotY(90);
+	ourModel.emplace_back(model);
+/*	try{
+		std::vector<Animation> animations = Animation::loadAllAnimations("models/penguin/Jogging.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::vector<Animation> animation = Animation::loadAllAnimations("models/penguin/Jumping.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::move(animation.begin(), animation.end(), std::back_inserter(animations));
+		for (Animation animation : animations)
+			model->setAnimator(Animator(animation));
+		model->setAnimation(1);
+	}catch(...){
+		ERRORL("Could not load animation!", "ANIMACION");
+	}*/
+
+
+/*	Model *pez = new Model("models/pez/pez.obj", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 50.0f), 50.0f);
 	pez->setNextTranslate(&translate);
 	pez->setTranslate(&translate);
@@ -63,8 +324,8 @@ void Scenario::InitGraph(Model *main) {
 	pez->getModelAttributes()->push_back(m);
 	translate.x = 10;
 	pez->setTranslate(&translate, pez->getModelAttributes()->size()-1);
-	pez->setNextTranslate(&translate, pez->getModelAttributes()->size()-1);
-
+	pez->setNextTranslate(&translate, pez->getModelAttributes()->size()-1);*/
+/*
 	model = new Model("models/dancing_vampire/dancing_vampire.dae", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f), 60.0f);
 	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
@@ -124,7 +385,9 @@ void Scenario::InitGraph(Model *main) {
 	model->getBonesInfo()->clear();
 	*model->GetBoneInfoMap() = *silly->GetBoneInfoMap();
 	*model->getBonesInfo() = *silly->getBonesInfo();
-	model->setAnimator(silly->getAnimator());
+	model->setAnimator(silly->getAnimator());*/
+
+
 
 	//	model = new Model("models/IronMan.obj", main->cameraDetails);
 //	translate = glm::vec3(0.0f, 20.0f, 30.0f);
@@ -132,7 +395,7 @@ void Scenario::InitGraph(Model *main) {
 //	model->setScale(&scale);
 //	model->setTranslate(&translate);
 //	ourModel.emplace_back(model);
-	model = new Model("models/backpack/backpack.obj", main->cameraDetails, false, false);
+/*	model = new Model("models/backpack/backpack.obj", main->cameraDetails, false, false);
 	translate = glm::vec3(20.0f, terreno->Superficie(20.0f, 0.0f) + 2, 0.0f);
 	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
 	model->setTranslate(&translate);
@@ -144,26 +407,26 @@ void Scenario::InitGraph(Model *main) {
 	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
 	model->setNextTranslate(model->getTranslate());
 	model->setScale(&scale);
-	ourModel.emplace_back(model);
+	ourModel.emplace_back(model);*/
 	
 
 	inicializaBillboards();
-	std::wstring prueba(L"Esta es una prueba");
-	ourText.emplace_back(new Texto(prueba, 20, 0, 0, SCR_HEIGHT, 0, camara));
-	billBoard2D.emplace_back(new Billboard2D((WCHAR*)L"billboards/awesomeface.png", 6, 6, 100, 200, 0, camara->cameraDetails));
+//	std::wstring prueba(L"Esta es una prueba");
+//	ourText.emplace_back(new Texto(prueba, 20, 0, 0, SCR_HEIGHT, 0, camara));
+//	billBoard2D.emplace_back(new Billboard2D((WCHAR*)L"billboards/awesomeface.png", 6, 6, 100, 200, 0, camara->cameraDetails));
 	scale = glm::vec3(100.0f, 100.0f, 0.0f);	// it's a bit too big for our scene, so scale it down
-	billBoard2D.back()->setScale(&scale);
+	//billBoard2D.back()->setScale(&scale);
 	}
 
 void Scenario::inicializaBillboards() {
-	float ye = terreno->Superficie(0, 0);
+	float ye = terreno->GetWorldHeight(0, 0);
 	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol.png", 6, 6, 0, ye - 1, 0, camara->cameraDetails));
 
-	ye = terreno->Superficie(-9, -15);
+	ye = terreno->GetWorldHeight(-9, -15);
 	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol3.png", 8, 8, -9, ye - 1, -15, camara->cameraDetails));
 
 	BillboardAnimation *billBoardAnimated = new BillboardAnimation();
-	ye = terreno->Superficie(5, -5);
+	ye = terreno->GetWorldHeight(5, -5);
 	for (int frameArbol = 1; frameArbol < 4; frameArbol++){
 		wchar_t textura[50] = {L"billboards/Arbol"};
 		if (frameArbol != 1){
@@ -197,8 +460,9 @@ Scene* Scenario::Render() {
 	// Decimos que dibuje la media esfera
 	sky->Draw();
 	// Ahora el terreno
+	terreno->Update(); // se encarga de cargar los chunks
 	terreno->Draw();
-	water->Draw();
+	//water->Draw();
 	// Dibujamos cada billboard que este cargado en el arreglo de billboards.
 	for (int i = 0; i < billBoard.size(); i++)
 		billBoard[i]->Draw();

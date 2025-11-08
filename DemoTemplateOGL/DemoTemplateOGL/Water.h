@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 #ifndef _wata
 #define _wata
 #include "Base/Utilities.h"
@@ -84,4 +84,4 @@ public:
 	}
 
 };
-#endif 
+#endif */

@@ -1,4 +1,92 @@
-#ifndef _terreno
+// Terreno.h
+#ifndef TERRENO_H
+#define TERRENO_H
+
+#include <map>
+#include <glm/glm.hpp>
+#include "Base/model.h"     // For Camera and Shader
+#include "TerrainChunk.h"   // The class we just made
+#include "NoiseGenerator.h"
+#include <string>
+
+// Define a simple key for our map, representing the chunk's grid coordinates (X, Z)
+// Using std::pair makes it easy to use as a key in std::map.
+using ChunkKey = std::pair<int, int>; 
+
+class Terreno {
+private:
+    // --- Core Components ---
+    NoiseGenerator* m_NoiseGenerator; // The (shared) noise generator
+    Camera* m_Camera;                 // A pointer to the active camera
+    Shader m_TerrainShader;            // The one shader used for all chunks
+    std::vector<Texture> m_TerrainTextures; // Textures (grass, rock, etc.)
+	std::string m_Directory; // <-- AÑADE ESTO directorio
+
+    // --- Chunk Management ---
+    std::map<ChunkKey, TerrainChunk*> m_ActiveChunks;
+    ChunkKey m_CurrentCameraChunkKey; // The key of the chunk the camera is currently in
+    int m_RenderDistance; // How many chunks to render in each direction (e.g., 5 = 11x11 grid)
+
+    /**
+     * @brief Converts a world position (like the camera's) into a ChunkKey.
+     */
+    ChunkKey getChunkKeyFromWorldPos(const glm::vec3& worldPos);
+
+    /**
+     * @brief Checks if a chunk at (chunkX, chunkZ) needs to be loaded, and loads it.
+     */
+    void loadChunk(int chunkX, int chunkZ);
+
+    /**
+     * @brief Scans the m_ActiveChunks map and unloads (deletes) any chunks
+     * that are too far from the camera. THIS IS THE KEY RAM OPTIMIZATION.
+     */
+    void unloadOldChunks();
+
+public:
+    /**
+     * @brief Constructor for the Terrain Manager.
+     * @param camera A pointer to the main camera.
+     * @param noiseGen A pointer to the (already initialized) noise generator.
+     * @param shaderPathVS Path to the terrain vertex shader.
+     * @param shaderPathFS Path to the terrain fragment shader.
+     * @param renderDistance The view distance in chunks.
+     */
+    Terreno(Camera* camera, NoiseGenerator* noiseGen, 
+            const char* shaderPathVS, const char* shaderPathFS, std::string directory, int renderDistance = 8);
+
+    /**
+     * @brief Destructor. Cleans up all active chunks to prevent memory leaks.
+     */
+    ~Terreno();
+
+    /**
+     * @brief Loads terrain textures (e.g., grass, rock, sand).
+     * This is just an example; you can adapt it to your texture loading system.
+     */
+    void LoadTerrainTexture(const char* path, const char* type);
+
+    /**
+     * @brief This is the main logic function. Call this every frame!
+     * It updates the camera position, loads new chunks, and unloads old ones.
+     */
+    void Update();
+
+    /**
+     * @brief This is the main draw function. Call this every frame after Update().
+     * It prepares the shader and draws all active chunks.
+     */
+    void Draw();
+
+	float GetWorldHeight(float worldX, float worldZ);
+
+
+};
+
+#endif // TERRENO_H
+
+
+/*#ifndef _terreno
 #define _terreno
 #include "Base/model.h"
 
@@ -190,4 +278,4 @@ public:
 	int   getMapAlturaY() { return mapAlturaY; }
 };
 
-#endif 
+#endif */
