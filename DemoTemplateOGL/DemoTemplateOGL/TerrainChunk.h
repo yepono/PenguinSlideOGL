@@ -2,12 +2,12 @@
 #ifndef TERRAIN_CHUNK_H
 #define TERRAIN_CHUNK_H
 
-#include "Base/model.h"     // Include your base model class
-#include "NoiseGenerator.h" // Include our new noise generator
+#include "Base/model.h"   
+#include "NoiseGenerator.h" 
 
 class TerrainChunk : public Model {
 public:
-    static const int CHUNK_SIZE = 64; // Vertices along one edge (e.g., 64x64 vertices)
+    static const int CHUNK_SIZE = 64; // Vertices along one edge (exaple: 64x64 vertices)
     static constexpr float MESH_SCALE = 1.0f;
 
 private:

@@ -722,8 +722,9 @@ bool Model::colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitio
 bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove) {
     if (objeto0.hitbox == NULL || objeto.hitbox == NULL)
         return false;
-    if (!(objeto0.active && objeto0.active))
-        return false;
+    // ambos atributos deben estar activos para que haya colisión
+    if (!(objeto0.active && objeto.active))
+         return false;
     Model* AABB = (Model*)objeto.hitbox;
     Model* AABB0 = (Model*)objeto0.hitbox;
     // Obtener las matrices de transformación para ambos modelos

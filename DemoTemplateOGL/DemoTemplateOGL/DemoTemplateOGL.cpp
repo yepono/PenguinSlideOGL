@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iterator>
+#include <cmath> // <-- añadido
 
 #include "Base/glext.h"
 #include "Base/wglext.h"
@@ -118,13 +120,14 @@ int startGameEngine(void *ptrMsg){
     Model* model = new Model("models/penguin/Idle_jumping.fbx", translate, camera);
     model->setTranslate(&translate);
     camera->setFront(v);
-    camera->setCharacterHeight(4.0);
-    scale = glm::vec3(0.09f, 0.09f, 0.09f);	// it's a bit too big for our scene, so scale it down
+    camera->setCharacterHeight(5.0);
+    scale = glm::vec3(0.07f, 0.07f, 0.07f);	
     model->setScale(&scale);
     model->setTranslate(&translate);
     model->setRotX(0);
 	model->setNextRotX(0);
-    delete model->getModelAttributes()->at(0).hitbox;
+    //delete model->getModelAttributes()->at(0).hitbox;
+    delete (Model*)model->getModelAttributes()->at(0).hitbox; // cast al tipo de objeto original para que el comp sepa cual destructor llamar
     Node n;
     n.m_center.x = 0.4;
     n.m_center.y = 2.6;
@@ -133,17 +136,38 @@ int startGameEngine(void *ptrMsg){
     n.m_halfHeight = 2.4;
     n.m_halfDepth = 1;
     model->getModelAttributes()->at(0).hitbox = CollitionBox::GenerateAABB(translate, n, camera);
-	try{
-		std::vector<Animation> animations = Animation::loadAllAnimations("models/penguin/Idle_jumping.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
-		std::vector<Animation> animation = Animation::loadAllAnimations("models/penguin/jump.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
-		std::vector<Animation> animation = Animation::loadAllAnimations("models/penguin/jump.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
-		std::move(animation.begin(), animation.end(), std::back_inserter(animations));
-		for (Animation animation : animations)
-			model->setAnimator(Animator(animation));
-		model->setAnimation(0);
-	}catch(...){
-		ERRORL("Could not load animation!", "ANIMACION");
-	}
+
+try{
+    // Cargar el vector principal
+    std::vector<Animation> animations = Animation::loadAllAnimations("models/penguin/Idle_jumping.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+    
+    // cargar las otras animaciones
+    std::vector<Animation> jump_anim = Animation::loadAllAnimations("models/penguin/jump.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+    std::vector<Animation> jogging_anim = Animation::loadAllAnimations("models/penguin/Jogging.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+
+    
+    // insertar la animacion de saltar
+    animations.insert(
+        animations.end(),
+        std::make_move_iterator(jump_anim.begin()),
+        std::make_move_iterator(jump_anim.end())
+    );
+
+    // inserta la animacion de correr
+    animations.insert(
+        animations.end(),
+        std::make_move_iterator(jogging_anim.begin()),
+        std::make_move_iterator(jogging_anim.end())
+    );
+
+    // inicializar animadores
+    for (Animation anim : animations) 
+        model->setAnimator(Animator(anim));
+        
+    model->setAnimation(2);
+    }catch(...){
+        ERRORL("Could not load animation!", "ANIMACION");
+    }
 
     OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
     translate = glm::vec3(5.0f, OGLobj->getTerreno()->GetWorldHeight(5.0, -5.0), -5.0f);
@@ -155,10 +179,10 @@ int startGameEngine(void *ptrMsg){
     Texto *fps = new Texto((WCHAR*)L"0 fps", 20, 0, 0, 22, 0, model);
     fps->name = "FPSCounter";
     OGLobj->getLoadedText()->emplace_back(fps);
-    Texto *coordenadas = new Texto((WCHAR*)L"0", 20, 0, 0, 0, 0, model);;
-	coordenadas->name = "Coordenadas";
-    OGLobj->getLoadedText()->emplace_back(coordenadas);
-    updatePosCords(coordenadas);
+    //Texto *coordenadas = new Texto((WCHAR*)L"0", 20, 0, 0, 0, 0, model);;
+	//coordenadas->name = "Coordenadas";
+    //OGLobj->getLoadedText()->emplace_back(coordenadas);
+    //updatePosCords(coordenadas);
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
@@ -176,7 +200,7 @@ int startGameEngine(void *ptrMsg){
             deltasCount -= 1000.0f;
             totFrames = 1;
         }
-        updatePosCords(coordenadas);
+        //updatePosCords(coordenadas);
         GameActions actions;
         actions.jump = &jump;
         // render
@@ -188,7 +212,7 @@ int startGameEngine(void *ptrMsg){
             delete OGLobj;
             OGLobj = escena;
             OGLobj->getLoadedText()->emplace_back(fps);
-            OGLobj->getLoadedText()->emplace_back(coordenadas);
+            //OGLobj->getLoadedText()->emplace_back(coordenadas);
         }
         swapGLBuffers();
     }
@@ -197,13 +221,13 @@ int startGameEngine(void *ptrMsg){
     if (camera != NULL) delete camera;
     if (model != NULL) delete model;
     if (fps != NULL) delete fps;
-    if (coordenadas != NULL) delete coordenadas;
+    //if (coordenadas != NULL) delete coordenadas;
     font_atlas::clearInstance();
     return finishProgram(ptrMsg);
 }
 
 bool checkInput(GameActions *actions, Scene* scene) {
-    bool changeAnimation = false;
+    bool isMoving = false;
     if (gamePadEvents(actions)){
     } else {
         mouseActions();
@@ -221,13 +245,53 @@ bool checkInput(GameActions *actions, Scene* scene) {
         OGLobj->setNextRotY(OGLobj->getNextRotY() + ((6 * gameTime.deltaTime / 100) * actions->sideAdvance));
     }
     if (actions->hAdvance != 0) {
-        glm::vec3 pos = *OGLobj->getTranslate();
-        pos.x += actions->hAdvance * (3 * gameTime.deltaTime/100) * glm::cos(glm::radians(OGLobj->getRotY()));
-        pos.z += actions->hAdvance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
-        // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-         pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->GetWorldHeight(pos.x, pos.z);
+        // lane-change logic:
+        // - discrete lane index (-1,0,1)
+        // - allow a lane change only every cooldown ms to avoid repeat while holding
+        // - smoothly interpolate X toward target lane for visible lateral movement
+        static int currentLane = 0;
+        static int targetLane = 0;
+        static float laneChangeTimerMs = 0.0f;
+        const float laneChangeCooldownMs = 150.0f; 
+        const float laneSpacing = 5.0f;
+        const float lateralInterpSpeed = 10.0f; // higher -> faster snap
+
+        // accumulate time
+        laneChangeTimerMs += gameTime.deltaTime;
+
+        // decide lane change on input edge (or hold with cooldown)
+        if (laneChangeTimerMs >= laneChangeCooldownMs) {
+            if (actions->hAdvance > 0.1f) {
+                targetLane = std::min(1, targetLane + 1);
+                laneChangeTimerMs = 0.0f;
+            } else if (actions->hAdvance < -0.1f) {
+                targetLane = std::max(-1, targetLane - 1);
+                laneChangeTimerMs = 0.0f;
+            }
+        }
+
+        // compute position: move forward/backwards as before (dz), but X interpolates to targetLane
+        glm::vec3 curr = *OGLobj->getTranslate();
+        glm::vec3 pos = curr;
+        float dz = actions->hAdvance * (3 * gameTime.deltaTime / 100.0f) * glm::sin(glm::radians(OGLobj->getRotY()));
+        pos.z += dz;
+
+        float desiredX = targetLane * laneSpacing;
+        // interpolation factor based on deltaTime (convert ms to seconds)
+        float t = std::min(1.0f, lateralInterpSpeed * ((float)gameTime.deltaTime / 1000.0f));
+        pos.x = glm::mix(curr.x, desiredX, t);
+
+        // snap to integer lane when very close to avoid floating residue
+        if (fabs(pos.x - desiredX) < 0.01f) {
+            pos.x = desiredX;
+            currentLane = targetLane;
+        }
+
+        // Posicion vertical en terreno
+        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->GetWorldHeight(pos.x, pos.z);
 
         OGLobj->setNextTranslate(&pos);
+        isMoving = true;
     }
     if (actions->advance != 0) {
         glm::vec3 pos = *OGLobj->getTranslate();
@@ -236,6 +300,7 @@ bool checkInput(GameActions *actions, Scene* scene) {
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
         pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->GetWorldHeight(pos.x, pos.z);
         OGLobj->setNextTranslate(&pos);
+        isMoving=true;
     }
     if (*actions->jump > 0){
         glm::vec3 pos = *OGLobj->getNextTranslate();
@@ -246,10 +311,8 @@ bool checkInput(GameActions *actions, Scene* scene) {
             *actions->jump = 0.0f;
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
         OGLobj->setNextTranslate(&pos);
-		OGLobj->setAnimation(1);
-    }else{
-        OGLobj->setAnimation(0);
     }
+    
     if (actions->getAngle() != NULL) {
         OGLobj->cameraDetails->calculateAngleAroundPlayer((*actions->getAngle()) * (6 * gameTime.deltaTime / 100));
     }
@@ -263,6 +326,16 @@ bool checkInput(GameActions *actions, Scene* scene) {
         OGLobj->cameraDetails->calculateZoomPlayer(*actions->getPlayerZoom() * (6 * gameTime.deltaTime / 100));
     }
 
+    if(*actions->jump > 0){
+        OGLobj->setAnimation(1);
+    }
+
+    else if(isMoving){
+        OGLobj->setAnimation(2);
+    }
+    else{
+        OGLobj->setAnimation(0);
+    }
     return true; // siempre buscar colision
 }
 
@@ -596,6 +669,116 @@ int finishProgram(void *ptr){
 int gamePadEvents(GameActions *actions){
 #ifdef _WIN32 
     if (gamPad->IsConnected()) {
+        // Obtenemos el estado de los botones
+        WORD botones = gamPad->GetState().Gamepad.wButtons;
+
+        // --- 1. AVANZAR / RETROCEDER (CRUZ ARRIBA/ABAJO) ---
+        
+
+        if (botones & XINPUT_GAMEPAD_DPAD_UP) {
+            actions->advance = 1.0f; // Velocidad máxima hacia adelante
+        } 
+        else if (botones & XINPUT_GAMEPAD_DPAD_DOWN) {
+            actions->advance = -1.0f; // Velocidad hacia atrás
+        }
+
+        // --- 2. GIRAR (CRUZ IZQUIERDA/DERECHA) ---
+        
+        if (botones & XINPUT_GAMEPAD_DPAD_LEFT) {
+            actions->setAngle(3.0f); // Girar izquierda
+        } 
+        else if (botones & XINPUT_GAMEPAD_DPAD_RIGHT) {
+            actions->setAngle(-3.0f); // Girar derecha
+        } else {
+            actions->setAngle(0.0f); // Dejar de girar si se suelta
+        }
+
+        // --- 3. SALTAR (BOTONES DE LA DERECHA) ---
+        
+        if ((botones & XINPUT_GAMEPAD_A) || (botones & XINPUT_GAMEPAD_B)) {
+            if (*actions->jump == 0.0f) {
+                *actions->jump = 15.0f; // Iniciar salto
+            }
+        }
+        
+        // --- 4 BOTONES LEFT/RIGHT 
+        actions->hAdvance = 0.0f;
+        if (botones & XINPUT_GAMEPAD_LEFT_SHOULDER) {
+            actions->hAdvance = -1.0f;
+        }
+        if (botones & XINPUT_GAMEPAD_RIGHT_SHOULDER) {
+            actions->hAdvance = 1.0f;
+        }
+
+        return 1;
+    } else {
+        return 0;
+    }
+#else
+    
+    if (glfwJoystickPresent(GLFW_JOYSTICK_1)) {
+        
+        // 1. OBTENER EJES 
+        int axesCount;
+        const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &axesCount);
+        
+        actions->advance = 0.0f;
+        actions->setAngle(0.0f);
+
+        if (axesCount >= 2) {
+            // EJE 1: AVANZAR / RETROCEDER (Axis 1)
+            if (axes[1] < -0.5f) { // Cruz Arriba
+                actions->advance = 1.0f;
+            } 
+            else if (axes[1] > 0.5f) { // Cruz Abajo
+                actions->advance = -1.0f;
+            }
+
+            // EJE 0: GIRAR (Axis 0)
+            if (axes[0] > -0.5f) { // Cruz Izquierda
+                actions->setAngle(3.0f); 
+            }
+            else if (axes[0] < 0.5f) { // Cruz Derecha
+                actions->setAngle(-3.0f);
+            }
+        }
+
+        // 2. Botones para saltar
+        int buttonCount;
+        const unsigned char* buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &buttonCount);
+
+        if (buttonCount > 0) {
+            // Si presiona el botón 0, 1, 2 o 3, salta.
+            bool botonPresionado = (buttonCount > 0 && buttons[0] == GLFW_PRESS) ||
+                                   (buttonCount > 1 && buttons[1] == GLFW_PRESS) ||
+                                   (buttonCount > 2 && buttons[2] == GLFW_PRESS) ||
+                                   (buttonCount > 3 && buttons[3] == GLFW_PRESS);
+
+            if (botonPresionado) {
+                if (*actions->jump == 0.0f) {
+                    *actions->jump = 15.0f;
+                }
+            }
+            
+            // Botones laterales
+            actions->hAdvance = 0.0f;
+            if (buttonCount > 4 && buttons[4] == GLFW_PRESS) actions->hAdvance = -1.0f; // L1 / LB
+            if (buttonCount > 5 && buttons[5] == GLFW_PRESS) actions->hAdvance = 1.0f;  // R1 / RB
+        }
+
+        return 1; 
+    }
+    
+    return 0; 
+#endif
+}
+
+
+
+/*
+int gamePadEvents(GameActions *actions){
+#ifdef _WIN32 
+    if (gamPad->IsConnected()) {
         //convierto a flotante el valor analogico de tipo entero
         double grados = (float)gamPad->GetState().Gamepad.sThumbLX / 32767.0;
         //debido a que los controles se aguadean con el uso entonces ya no dan el cero
@@ -616,7 +799,7 @@ int gamePadEvents(GameActions *actions){
         ERRORL("This should be the gamepad code", "GAMEPAD");
     return 0;
 #endif
-}
+}*/
 
 void updatePosCords(Texto* coordenadas) {
     wchar_t wCoordenadas[350] = { 0 };

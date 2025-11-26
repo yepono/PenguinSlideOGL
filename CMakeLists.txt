@@ -40,6 +40,7 @@ add_executable(FullDemoTemplateOGL
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/TerrainChunk.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Terreno.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/DemoTemplateOGL.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/GameManager.cpp
 )
 
 target_link_libraries(FullDemoTemplateOGL glfw)

@@ -9,6 +9,7 @@
 //#include "Water.h" desactivado por cambio en terreno.h
 #include "Animator.h"
 #include "Animation.h"
+#include "GameManager.h"
 
 class Scene {
 	public:
@@ -28,6 +29,7 @@ class Scene {
 		};
 
 		virtual int update(){
+			
             float angulo = getAngulo() + 1.5 * gameTime.deltaTime / 100;
             angulo = angulo >= 360 ? angulo - 360.0 : angulo;
             setAngulo(angulo);
@@ -49,12 +51,20 @@ class Scene {
 						idxCollider = mcollider.attrIdx;
 					}
 					if (collider != NULL && model == camara){
-						if (ejeColision.y == 1){
-							INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
-							if (removeCollideModel(collider, idxCollider))
-								i--;
-						}
-					}
+                        if (ejeColision.z == 1){
+                            // Si es una moneda, coleccionar silenciosamente sin imprimir "APLASTADO"
+                            std::string ctype = collider->getModelType();
+                            if (ctype == "coin") {
+                                if (removeCollideModel(collider, idxCollider))
+                                    i--;
+                            } else {
+                                // obstáculo: imprimimos el aviso y dejamos que removeCollideModel maneje el resto
+                                //INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
+                                if (removeCollideModel(collider, idxCollider))
+                                    i--;
+                            }
+                        }
+                    }
 					if (j < 0) j = 0;
 				}
 				if (i < 0) i = 0;

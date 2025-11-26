@@ -1,17 +1,17 @@
 #version 330 core
-layout (location = 0) in vec3 aPos;      // Posición del vértice (desde tu VBO)
+layout (location = 0) in vec3 aPos;      // Posición del vertice (desde VBO)
 layout (location = 1) in vec2 aTexCoords; // Coordenadas de textura
-layout (location = 2) in vec3 aNormal;   // Normal del vértice
+layout (location = 2) in vec3 aNormal;   // Normal del vertice
 
 // Matrices (uniforms globales)
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-// Salidas (se envían al Fragment Shader)
+// Salidas se envian al Fragment Shader
 out vec2 v_TexCoords;
 out vec3 v_Normal;
-out vec3 v_WorldPos; // Posición en el mundo (para la iluminación)
+out vec3 v_WorldPos; // Posicion en el mundo 
 
 void main()
 {
@@ -19,7 +19,6 @@ void main()
     v_WorldPos = vec3(model * vec4(aPos, 1.0));
     
     // Calcula la normal en el mundo (importante para la iluminación)
-    // Usamos transpose(inverse(model)) para manejar escalas no uniformes
     v_Normal = mat3(transpose(inverse(model))) * aNormal;
     
     // Pasa las coordenadas de textura

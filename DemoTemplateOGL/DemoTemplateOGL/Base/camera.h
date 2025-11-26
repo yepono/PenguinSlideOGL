@@ -148,7 +148,7 @@ public:
             posc.X + dirc.X, posc.Y, posc.Z + dirc.Z,
             0, 1, 0);*/
         glm::vec3 tmp(Front.x, 0, Front.z);
-        glm::lookAt(Position, Position + tmp, Up);
+        view = glm::lookAt(Position, Position + tmp, Up);
     }
     void CamaraAvanza(float vel) {
         glm::vec3 newPos;

@@ -7,13 +7,12 @@ in vec3 v_Normal;
 in vec3 v_WorldPos;
 
 // --- Texturas ---
-// "texture_diffuse1" coincide con el tipo que usa tu Mesh.h
 uniform sampler2D texture_diffuse1; 
 
 // --- Iluminación ---
 uniform vec3 viewPos; // Posición de la cámara
 
-// Estructura de luz (debe coincidir con la de Terreno::Draw)
+// Estructura de luz 
 struct Light {
     vec3 position;
     vec3 ambient;
@@ -22,7 +21,6 @@ struct Light {
 };
 uniform Light light;
 
-// (Tu Mesh.h también envía un material, pero lo simplificaremos por ahora)
 
 void main()
 {
@@ -45,8 +43,8 @@ void main()
     
     // Especular (Blinn-Phong)
     vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(norm, halfwayDir), 0.0), 32.0); // 32.0 = shininess
-    vec3 specular = light.specular * spec; // Generalmente no se tinta con la textura
+    float spec = pow(max(dot(norm, halfwayDir), 0.0), 42.0); // 32.0 = shininess
+    vec3 specular = light.specular * spec ; 
 
     // 3. Color Final
     vec3 result = ambient + diffuse + specular;

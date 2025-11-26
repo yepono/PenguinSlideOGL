@@ -60,17 +60,22 @@ bool KeysEvents(GameActions *actions){
 		KEYS[input.C] = false;
 	}
 	if (KEYS[input.D]) {
+		actions->hAdvance = -1;
+		/*
 		if (KEYS[KEYB_HMOVEMENT])
 			actions->hAdvance = -1;
 		else
-			actions->sideAdvance = -1;
+			actions->sideAdvance = -1;*/
 //		KEYS[input.D] = false;
 	}
 	if (KEYS[input.A]) {
+
+		actions->hAdvance = 1;
+		/*
 		if (KEYS[KEYB_HMOVEMENT])
 			actions->hAdvance = 1;
 		else
-			actions->sideAdvance = 1;
+			actions->sideAdvance = 1;*/
 //		KEYS[input.A] = false;
 	}
 	if (KEYS[input.W]) {
@@ -78,11 +83,11 @@ bool KeysEvents(GameActions *actions){
 //		KEYS[input.W] = false;
 	}
 	if (KEYS[input.S]) {
-		actions->advance = -1;
+		//actions->advance = -1;
 //		KEYS[input.S] = false;
 	}
 	if (KEYS[input.Space] && *actions->jump == 0){
-		*actions->jump = 20;
+		*actions->jump = 40;
 	}
 	if (cDelta.getLbtn() && cDelta.getDX() != 0) {
 		actions->setAngle(cDelta.getDX() > 0 ? 1 : -1);
