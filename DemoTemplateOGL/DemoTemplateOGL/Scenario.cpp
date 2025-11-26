@@ -135,7 +135,7 @@ void Scenario::InitGraph(Model *main) {
 
 	// seagull
 	model = new Model("models/seagull/seagull/seagull.fbx", main->cameraDetails, true, true);
-	translate = glm::vec3(33.0f, terreno->GetWorldHeight(33.0f, 90.0f) , 90.0f);
+	translate = glm::vec3(33.0f, terreno->GetWorldHeight(33.0f, 90.0f) + 5, 90.0f);
 	scale = glm::vec3(0.006f, 0.006f, 0.006f);	// it's a bit too big for our scene, so scale it down
 	model->name = "Seagull";
 	model->setTranslate(&translate);
@@ -161,6 +161,8 @@ void Scenario::InitGraph(Model *main) {
 	}catch(...){
 		ERRORL("Could not load animation!", "ANIMACION");
 	}
+	ourModel.emplace_back(model);
+	m_RecyclableObjects.emplace_back(model);
 
 	// Wolf
 	model = new Model("models/wolf-animated/source/WOLF_DEMO.fbx", main->cameraDetails, true, true);
